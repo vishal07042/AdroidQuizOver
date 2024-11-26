@@ -1,5 +1,6 @@
 package com.example.quiztrail
 
+
 import android.app.AppOpsManager
 import android.content.Intent
 import android.os.Bundle
@@ -7,36 +8,69 @@ import android.os.Process
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.quiztrail.ui.theme.QuizTrailTheme
+import com.google.gson.Gson
+import android.util.Log
 
 class MainActivity : ComponentActivity() {
+    private var currentBlockedApp: String? = null
+    private var currentQuestion: QuizQuestion? = null
+    private var showQuiz by mutableStateOf(false)
+    private val gson = Gson()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Check and request usage stats permission
         if (!hasUsageStatsPermission()) {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
         
-        // Start monitoring service
         startService(Intent(this, AppMonitoringService::class.java))
         
-        enableEdgeToEdge()
+        handleIntent(intent)
+        
         setContent {
             QuizTrailTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (showQuiz && currentQuestion != null) {
+                        QuizDialog(
+                            question = currentQuestion!!,
+                            onAnswerSelected = { correct ->
+                                if (correct) {
+                                    showQuiz = false
+                                    currentBlockedApp = null
+                                    finish()
+                                }
+                            },
+                            onDismissRequest = {
+                                // Don't allow dismissal, must answer correctly
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleIntent(intent: Intent) {
+        if (intent.getBooleanExtra("SHOW_QUIZ", false)) {
+            currentBlockedApp = intent.getStringExtra("BLOCKED_PACKAGE")
+            val questionJson = intent.getStringExtra("QUESTION")
+            if (questionJson != null) {
+                try {
+                    currentQuestion = gson.fromJson(questionJson, QuizQuestion::class.java)
+                    showQuiz = true
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error parsing question: ${e.message}")
                 }
             }
         }

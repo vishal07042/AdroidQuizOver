@@ -1,0 +1,19 @@
+{
+	"questions": [
+		{
+			"question": "What is a coroutine in Kotlin?",
+			"options": [
+				"A type of food",
+				"A lightweight thread for asynchronous programming",
+				"A database",
+				"A UI component"
+			],
+			"correctAnswer": 1
+		},
+		{
+			"question": "Which keyword is used to declare a variable in Kotlin?",
+			"options": ["var", "let", "const", "def"],
+			"correctAnswer": 0
+		}
+	]
+}
