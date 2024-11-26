@@ -60,10 +60,19 @@ class AppMonitoringService : Service() {
             events.getNextEvent(event)
             if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
                 val packageName = event.packageName
+
+                val randomQuestion = questions.random()
                 if (packageName != lastOpenedApp && 
                     packageName != "com.example.quiztrail" && 
                     !packageName.startsWith("com.android")) {
                     Log.d(TAG, "New app opened: $packageName")
+                    val intent = Intent(this, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        putExtra("SHOW_QUIZ", true)
+                        putExtra("BLOCKED_PACKAGE", packageName)
+                        putExtra("QUESTION", gson.toJson(randomQuestion))
+                    }
+                    startActivity(intent)
                     showQuiz(packageName)
                     lastOpenedApp = packageName
                 }
