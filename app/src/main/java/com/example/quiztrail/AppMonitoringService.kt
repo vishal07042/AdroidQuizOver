@@ -63,17 +63,24 @@ class AppMonitoringService : Service() {
 
                 val randomQuestion = questions.random()
                 if (packageName != lastOpenedApp && 
-                    packageName != "com.example.quiztrail" && 
-                    !packageName.startsWith("com.android")) {
+                    packageName != "com.example.quiztrail" ) {
                     Log.d(TAG, "New app opened: $packageName")
-                    val intent = Intent(this, MainActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        putExtra("SHOW_QUIZ", true)
-                        putExtra("BLOCKED_PACKAGE", packageName)
-                        putExtra("QUESTION", gson.toJson(randomQuestion))
-                    }
-                    startActivity(intent)
-                    showQuiz(packageName)
+
+
+                    // using force launch 
+                   val launchIntent = packageManager.getLaunchIntentForPackage("com.example.quiztrail")?.apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                           Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                           Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or
+                           Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT)
+                    putExtra("SHOW_QUIZ", true)
+                    putExtra("BLOCKED_PACKAGE", packageName)
+                    putExtra("QUESTION", gson.toJson(questions.random()))
+                }
+                    startActivity(launchIntent)
+                 // showQuiz(packageName)
                     lastOpenedApp = packageName
                 }
             }
@@ -89,8 +96,15 @@ class AppMonitoringService : Service() {
         val randomQuestion = questions.random()
         Log.d(TAG, "Showing quiz for package: $packageName with question: ${randomQuestion.question}")
         
+        // Launch our app immediately with high priority flags
         val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                   Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                   Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                   Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                   Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+            addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT)
             putExtra("SHOW_QUIZ", true)
             putExtra("BLOCKED_PACKAGE", packageName)
             putExtra("QUESTION", gson.toJson(randomQuestion))
